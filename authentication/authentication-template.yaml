@@ -1,0 +1,119 @@
+version: 0.50.2
+type: DeclarativeSource
+check:
+  type: CheckStream
+  stream_names:
+    - Authentication Template
+streams:
+  - type: DeclarativeStream
+    name: Authentication Template
+    primary_key:
+      - id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        $schema: http://json-schema.org/schema#
+        properties:
+          fields:
+            type: object
+          formId:
+            type:
+              - 'null'
+              - string
+          id:
+            type: string
+          publishAt:
+            type: string
+        type: object
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url_base: '{{ config[''endpoint''] }}'
+        path: workspace/{{config['wid']}}/projects/{{config['pid']}}/reports/search
+        http_method: GET
+        request_parameters: {}
+        request_headers: {}
+        authenticator:
+          type: SessionTokenAuthenticator
+          login_requester:
+            type: HttpRequester
+            url_base: '{{ config[''endpoint''] }}/permissions'
+            path: ''
+            authenticator:
+              type: NoAuth
+            http_method: POST
+            request_parameters: {}
+            request_headers: {}
+            request_body_json:
+              key: '{{ config[''key''] }}'
+              email: '{{ config[''email''] }}'
+          session_token_path:
+            - token
+          expiration_duration: PT1H
+          request_authentication:
+            type: ApiKey
+            inject_into:
+              type: RequestOption
+              field_name: Authorization
+              inject_into: header
+        request_body_json: {}
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path: []
+      paginator:
+        type: NoPagination
+spec:
+  connection_specification:
+    $schema: http://json-schema.org/draft-07/schema#
+    type: object
+    required:
+      - email
+      - endpoint
+      - key
+      - pid
+      - wid
+    properties:
+      email:
+        type: string
+        order: 0
+        title: email
+        description: Permission Email
+      endpoint:
+        type: string
+        order: 1
+        title: endpoint
+      key:
+        type: string
+        order: 2
+        title: key
+        description: Permission key
+        airbyte_secret: true
+      page:
+        type: string
+        order: 3
+        title: page
+        default: '0'
+      pid:
+        type: string
+        order: 4
+        title: pid
+        description: projectId
+      size:
+        type: string
+        order: 5
+        title: size
+        default: '15'
+      wid:
+        type: string
+        order: 6
+        title: wid
+        description: workspaceId
+    additionalProperties: true
+  documentation_url: https://example.org
+  type: Spec
+metadata:
+  autoImportSchema:
+    Authentication Template: true
